@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI_Lee</title>
+
+    <style>
+        .custom-text {
+            display: flex;
+            font-size: 30px;
+            font-family: 'nanumgothic-regular', sans-serif;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+          }
+          .footer {
+            display: flex;
+            justify-content: space-around;
+            background-color: #f0f0f0; 
+            padding: 20px;
+        }
+    
+        .partner_box {
+            text-align: center;
+            padding: 0 20px;
+            position: relative; 
+        }
+    
+        .partner_box::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            right: -1px; 
+            width: 1px;
+            height: 50%;
+            background-color: #ccc; 
+            transform: translateY(-50%);
+        }
+    
+        .partner_box:last-child::before {
+            display: none; 
+        }
+    
+        .title {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+    
+        .link_partner {
+            text-decoration: none;
+            color: #007BFF;
+        }
+        button {
+            background-color: #00BFFF; 
+            color: white;
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 20px; 
+            cursor: pointer; 
+        }
+
+        button:hover {
+            background-color: #007ACC; 
+        }
+      </style>
+
+</head>
+<body>
+    <div>
+        <div class="container">
+            <div style="text-align: center;">
+                <span class="custom-text">AI_Lee</span>
+            </div>
+            <div>낯선이가 상혁이가 맞는지 확인해보세요!<br>
+            (버튼 클릭 후 카메라로 얼굴을 인식시키세요)</div>
+            <button type="button" onclick="init()">너 상혁이니?</button>
+        </div>
+
+        <div class="footer">
+            <div class="partner_box">
+                <h3 class="title">Creators</h3>
+                <a target="_blank" href="https://www.instagram.com/1day_lee/" class="link_partner">원데이 리</a>
+            </div>
+            <div class="partner_box">
+                <h3 class="title">Developers</h3>
+                <a target="_blank" href="https://github.com/htk96/1Day_Lee" class="link_partner">htk96</a>
+            </div>
+            <div class="partner_box">
+                <h3 class="title">Recruitment</h3>
+                <a target="_blank" href="https://www.instagram.com/1day_lee/" class="link_partner">원데이 리(To. DM)</a>
+            </div>
+        </div>
+    </div>
+<div id="webcam-container"></div>
+<div id="label-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+<script type="text/javascript">
+    // More API functions here:
+    // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
+
+    // the link to your model provided by Teachable Machine export panel
+    const URL = "./my_model/";
+
+    let model, webcam, labelContainer, maxPredictions;
+
+    // Load the image model and setup the webcam
+    async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        // load the model and metadata
+        // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
+        // or files from your local hard drive
+        // Note: the pose library adds "tmImage" object to your window (window.tmImage)
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+
+        // Convenience function to setup a webcam
+        const flip = true; // whether to flip the webcam
+        webcam = new tmImage.Webcam(200, 200, flip); // width, height, flip
+        await webcam.setup(); // request access to the webcam
+        await webcam.play();
+        window.requestAnimationFrame(loop);
+
+        // append elements to the DOM
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+        labelContainer = document.getElementById("label-container");
+        for (let i = 0; i < maxPredictions; i++) { // and class labels
+            labelContainer.appendChild(document.createElement("div"));
+        }
+    }
+
+    async function loop() {
+        webcam.update(); // update the webcam frame
+        await predict();
+        window.requestAnimationFrame(loop);
+    }
+
+    // run the webcam image through the image model
+    async function predict() {
+        // predict can take in an image, video or canvas html element
+        const prediction = await model.predict(webcam.canvas);
+        for (let i = 0; i < maxPredictions; i++) {
+            const classPrediction =
+                prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+            labelContainer.childNodes[i].innerHTML = classPrediction;
+        }
+    }
+</script>
+
+    
+</body>
+</html>
